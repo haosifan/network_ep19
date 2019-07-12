@@ -9,8 +9,30 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rtweet)
+library(openxlsx)
 ```
 
-Einlesen der Liste 
+#Einlesen der Daten
+
+Liste aller MEPs (Stand 12.07.2019) mit Parteizugehörigkeit, Land und Fraktion und dazugehörigem Twitternamen.
+
+Link user_ids to screen_name in meps_list_withtwitter.
+
+```{r}
+lookup_userids <- function(user_name) {
+  user_info <- rtweet::lookup_users(user_name, parse = TRUE)
+  return(user_info$user_id)
+  }
+
+meps_full_list <- openxlsx::read.xlsx("../data/list_meps_2019.xlsx", sheet = 1) %>% tbl_df()
+meps_full_list
+
+meps_list_withtwitter <- meps_full_list %>% 
+  filter(!is.na(twitter_name)) %>% 
+  mutate(twitter_id = lookup_userids(twitter_name))
+meps_list_withtwitter
+```
+
+
 
 
