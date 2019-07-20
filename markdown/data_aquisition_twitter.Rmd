@@ -12,7 +12,8 @@ library(rtweet)
 library(openxlsx)
 ```
 
-#Einlesen der Daten
+
+# Einlesen der Daten
 
 Liste aller MEPs (Stand 12.07.2019) mit Parteizugehörigkeit, Land und Fraktion und dazugehörigem Twitternamen.
 
@@ -21,7 +22,7 @@ Link user_ids to screen_name in meps_list_withtwitter.
 ```{r}
 lookup_userids <- function(user_name) {
   user_info <- rtweet::lookup_users(user_name, parse = TRUE)
-  return(user_info$screen_name)
+  return(user_info$user_id)
 }
 
 meps_full_list <- openxlsx::read.xlsx("../data/list_meps_2019.xlsx", sheet = 1) %>% tbl_df()
@@ -33,16 +34,13 @@ meps_list_withtwitter <- meps_full_list %>%
 meps_list_withtwitter
 ```
 
-Test with 5 users
+Obtain all Edges from MEP connections on twitter. We can even make a directed network of it.
+First get all friends of all MEPs. Then filter if the any of the user_ids of the MEP-list is in the "allfriends"-list.
 
 ```{r}
+allfriends <- rtweet::get_friends(users = meps_list_withtwitter$twitter_id, retryonratelimit = TRUE)
 
-test_meps_list_withtwitter <- meps_list_withtwitter %>% sample_n(15)
-
-
-test_allfriends <- rtweet::get_friends(users = test_meps_list_withtwitter$twitter_id, retryonratelimit = TRUE)
-
-test_allfriends %>% 
+edge_list <- allfriends %>% 
   filter(user_id %in% test_meps_list_withtwitter$twitter_id)
 ```
 
