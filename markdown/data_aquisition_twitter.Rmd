@@ -37,6 +37,7 @@ Test with 5 users
 
 ```{r}
 
+<<<<<<< Updated upstream
 test_meps_list_withtwitter <- meps_list_withtwitter %>% sample_n(15)
 
 
@@ -44,6 +45,10 @@ test_allfriends <- rtweet::get_friends(users = test_meps_list_withtwitter$twitte
 
 test_allfriends %>% 
   filter(user_id %in% test_meps_list_withtwitter$twitter_id)
+=======
+edge_list <- allfriends %>% 
+  filter(user_id %in% meps_list_withtwitter$twitter_id)
+>>>>>>> Stashed changes
 ```
 
 
