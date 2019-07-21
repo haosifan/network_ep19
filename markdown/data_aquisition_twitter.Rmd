@@ -52,4 +52,3 @@ write_csv2(x = meps_list_withtwitter, path = "../data/meps_twitter.csv")
 ```
 
 
-
