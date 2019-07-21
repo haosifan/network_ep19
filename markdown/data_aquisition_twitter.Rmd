@@ -21,7 +21,7 @@ Link user_ids to screen_name in meps_list_withtwitter.
 ```{r}
 lookup_userids <- function(user_name) {
   user_info <- rtweet::lookup_users(user_name, parse = TRUE)
-  return(user_info$screen_name)
+  return(user_info$user_id)
 }
 
 meps_full_list <- openxlsx::read.xlsx("../data/list_meps_2019.xlsx", sheet = 1) %>% tbl_df()
@@ -45,6 +45,10 @@ allfriends <- rtweet::get_friends(users = meps_list_withtwitter$twitter_id, retr
 edge_list <- allfriends %>% 
   filter(user_id %in% meps_list_withtwitter$twitter_id)
 
+write_csv2(x = allfriends, path = "../data/allfriends.csv")
+write_csv2(x = edge_list, path = "../data/edge_list.csv")
+write_csv2(x = meps_full_list, "../data/meps_full_list.csv")
+write_csv2(x = meps_list_withtwitter, path = "../data/meps_twitter.csv")
 ```
 
 
