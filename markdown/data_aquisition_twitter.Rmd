@@ -43,12 +43,44 @@ Result is an edge list, which can be used for making a directed network.
 allfriends <- rtweet::get_friends(users = meps_list_withtwitter$twitter_id, retryonratelimit = TRUE)
 
 edge_list <- allfriends %>% 
-  filter(user_id %in% meps_list_withtwitter$twitter_id)
+  filter((user %in% meps_list_withtwitter$twitter_id) | (user_id %in% meps_list_withtwitter$twitter_id))
 
 write_csv2(x = allfriends, path = "../data/allfriends.csv")
 write_csv2(x = edge_list, path = "../data/edge_list.csv")
 write_csv2(x = meps_full_list, "../data/meps_full_list.csv")
 write_csv2(x = meps_list_withtwitter, path = "../data/meps_twitter.csv")
+```
+
+
+In the first round `r length(unique(edge_list$user))` (539) MEPs resulted as start nodes and `r length(unique(edge_list$user_id` (619) as end node.
+
+Which MEPs are still missing in as start nodes?
+ * Can be because of protected profiles
+ * data retrieval error
+ * the MEP is not following anyone of their colleagues (or not anyone at all)
+
+
+MEPs with Twitter, but not at all in the edge_list are:
+
+Michael Gahler - protected
+Kinga Gál - wrong twitter account, deleted for next data retrieval rounds
+Hannes Heide - unclear if correct account
+Krysztof Jurgiel - not following anybody of his/her colleagues (!)
+Sylvia LIMMER - protected account
+Aušra MALDEIKIENE - not following anybody of his/her colleagues (!)
+Giuseppe MILAZZO - not following anybody of his/her colleagues (!)
+Marlene MORTLER - Fake account - deleted for next data retrieval rounds
+Sandra PEREIRA - data retrieval error
+Drago<U+0219> PÎSLARU - not following anybody of his/her colleagues (!)
+Rovana PLUMB - not following anybody of her colleagues
+
+
+
+```{r}
+meps_list_withtwitter %>% filter(!(twitter_id %in% edge_list$user_id))
+
+get_friends("rovanaplumb") %>% filter(user_id %in% meps_list_withtwitter$twitter_id)
+
 ```
 
 
