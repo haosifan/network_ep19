@@ -12,7 +12,7 @@ library(rtweet)
 library(openxlsx)
 ```
 
-#Einlesen der Daten
+# Einlesen der Daten
 
 Liste aller MEPs (Stand 12.07.2019) mit Parteizugehörigkeit, Land und Fraktion und dazugehörigem Twitternamen.
 
@@ -63,7 +63,7 @@ Which MEPs are still missing in as start nodes?
 MEPs with Twitter, but not at all in the edge_list are:
 
 Michael Gahler - protected
-Kinga Gál - wrong twitter account, deleted for next data retrieval rounds
+KingaGál - wrong twitter account, deleted for next data retrieval rounds
 Hannes Heide - unclear if correct account
 Krysztof Jurgiel - not following anybody of his/her colleagues (!)
 Sylvia LIMMER - protected account
@@ -75,11 +75,16 @@ Drago<U+0219> PÎSLARU - not following anybody of his/her colleagues (!)
 Rovana PLUMB - not following anybody of her colleagues
 
 
+# provisional step
+
+Adjust the MEP-info on these cases that are part of the edge list, either as start or as end-node.
 
 ```{r}
-meps_list_withtwitter %>% filter(!(twitter_id %in% edge_list$user_id))
 
-get_friends("rovanaplumb") %>% filter(user_id %in% meps_list_withtwitter$twitter_id)
+d_mep_twitter_adj <- d_mep_twitter %>% 
+  filter((twitter_id %in% edge_list$user) | twitter_id %in% edge_list$user_id)
+
+
 
 ```
 
