@@ -8,10 +8,12 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
+library(dplyr)
+library(data.table)
 ```
 
-```{r}
-#source("../scripts/build_igraph.R")
+```{r echo = FALSE, results = "hide"}
+source("../scripts/build_igraph.R")
 ```
 
 # Analyse der MEPs
@@ -25,11 +27,14 @@ g_degree_out <- igraph::degree(net_igraph, mode = "out")
 g_degree_in <- igraph::degree(net_igraph, mode = "in")
 ```
 
-Der Abgeordnete mit den meisten Followern (innerhalb der MEPs) ist Guy Verhofstadt (221 MEPs folgen ihm). Diejenige Abgeordnete, die den meisten anderen MEPs folgt ist Isa Adinolfi (ITA, M5S), die 241 weiteren MEPs folgt.
+Der Abgeordnete mit den meisten Followern (innerhalb der MEPs) ist Frans Timmermans (520 MEPs folgen ihm). Diejenige Abgeordnete, die den meisten anderen MEPs folgt ist Tomáš ZDECHOVSKÝ (EPP, Czech Rep.), der 586 von 621 twitter-aktiven MEPs folgt.
 
 ```{r echo = F, warning = F}
 which.max(g_degree_out)
+filter(d_mep_twitter_adj, twitter_id == names(which.max(g_degree_out)))
+
 which.max(g_degree_in)
+filter(d_mep_twitter_adj, twitter_id == names(which.max(g_degree_in)))
 ```
 
 Top20 der MEPs sowohl der ausgehenden als auch der eingehenden Kontakte. Die Tabellen wären auch nach nach Fraktionen oder Nationen aufteilbar.
@@ -43,7 +48,6 @@ top20_eu_in <- as.data.frame(g_degree_in) %>%
   arrange(-indegree) %>% 
   tbl_df() %>%
   .[1:20,]
-top20_eu_in
 kable(top20_eu_in, caption = "Most followers")
 
 ```
@@ -57,7 +61,6 @@ top20_eu_out <- as.data.frame(g_degree_out) %>%
   arrange(-outdegree) %>% 
   tbl_df() %>%
   .[1:20,]
-top20_eu_out
 kable(top20_eu_in, caption = "Most followings")
 ```
 
@@ -80,13 +83,12 @@ top_10_betweenness <- as.data.frame(g_betweenness) %>%
   left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>% 
   .[1:10,] %>% 
   tbl_df()
-top_10_betweenness
 kable(top_10_betweenness, caption = "Top10 - betweenness")
 ```
 
 ## Eigenvector centrality
 
-Statistisch ein bisschen fortgeschrittener als die betweenness. Hoher Eigenvector-Wert heißt, dass der Knoten mit besonders vielen anderen Knoten verbunden ist, besonders stark aber mit anderen Knoten die ihrerseits wieder mit vielen verbunden sind.
+Statistisch ein bisschen fortgeschrittener als die betweenness. Hoher Eigenvector-Wert heißt, dass der Knoten mit besonders vielen anderen Knoten verbunden ist, besonders stark aber mit anderen Knoten, die ihrerseits wieder mit vielen verbunden sind.
 
 ```{r echo = F, warning = F}
 g_ev <- eigen_centrality(net_igraph, directed = T)$vector
@@ -99,16 +101,15 @@ top_10_eigencentrality <- as.data.frame(g_ev) %>%
   left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>%  
   .[1:10,] %>% 
   tbl_df()
-top_10_eigencentrality
 kable(top_10_eigencentrality, caption = "Top10 - Eigenvector centrality")
 ```
 
 # Analyse des Netzwerks
 
 ## Edge Density
-Proportion of vertices that actually exist, out of all potential existing. Kann also als Prozentzahl gesehen werden. Die Zahl alleine sagt noch nicht allzuviel aus. Man kann aber randomisation tests machen, indem man x Netzwerke simuliert, die in etwa �hnlich zu dem vorhandenen sind und schaut, ob die "Edge Density" besonders auff�llt. 
+Proportion of vertices that actually exist, out of all potential existing. Kann also als Prozentzahl gesehen werden. Die Zahl alleine sagt noch nicht allzuviel aus. Man kann aber randomisation tests machen, indem man x Netzwerke simuliert, die in etwa ähnlich zu dem vorhandenen sind und schaut, ob die "Edge Density" besonders auffällt. 
 
-Hier k�nnte man auch die Density nur innerhalb von pol. Gruppen vergleichen und die "dichteste" Gruppe rausstellen etc.
+Hier könnte man auch die Density nur innerhalb von pol. Gruppen vergleichen und die "dichteste" Gruppe rausstellen etc.
 
 ```{r echo = F, warning = F}
 edge_density(net_igraph)*100
@@ -116,15 +117,15 @@ edge_density(net_igraph)*100
 
 ## Average Path length
 
-Beschreibt die durchschnittliche Pfadl�nge, die man zur�cklegen muss um zu einem anderen Knoten zu kommen. Der durchschnittliche Weg zwischen zwei Knoten also. Den finde ich hier mit `r mean_distance(net_igraph, directed=T)` auf Anhieb recht kurz, aber auch damit kann man random tests machen. Grunds�tzlich hie�e das aber, man kann fast immer zu einem guten "Multiplikator-MEP" kommen und �ber den zum Ziel.
+Beschreibt die durchschnittliche Pfadlänge, die man zurücklegen muss um zu einem anderen Knoten zu kommen. Der durchschnittliche Weg zwischen zwei Knoten also. Den finde ich hier mit `r mean_distance(net_igraph, directed=T)` auf Anhieb recht kurz, aber auch damit kann man random tests machen. Grundsätzlich hieße das aber, man kann fast immer zu einem guten "Multiplikator-MEP" kommen und über den zum Ziel (2,5 Schritte).
 
 ```{r echo = F, warning = F}
 mean_distance(net_igraph, directed = T)
 ```
 
-Tats�chlich ist der Weg angeblich sogar relativ lang. Jedenfalls �bernat�rlich lang f�r ein Netzwerk der gleichen edge_density wie in unserem Originalnetzwerk. Davon habe ich 1000 simuliert und die Kanten werden zuf�llig zwischen die gleiche Anzahl an Knoten gesetzt. F�r alle wird dann die MeanDistance errechnet und in einem Histogramm dargestellt. Das sieht jetzt schon relativ gestaucht aus, weil die alle eine mean_distance von 1.97 - 1.98 haben. Da liegt unsere mean_distance (rote Linie) dann signifikant dr�ber ;)
+Tatsächlich ist der Weg angeblich sogar relativ lang. Jedenfalls übernatürlich lang für ein Netzwerk der gleichen edge_density wie in unserem Originalnetzwerk. Davon habe ich 1000 simuliert und die Kanten werden zufällig zwischen die gleiche Anzahl an Knoten gesetzt. Für alle wird dann die MeanDistance errechnet und in einem Histogramm dargestellt. Das sieht jetzt schon relativ gestaucht aus, weil die alle eine mean_distance von 2.23 - 2.28 haben. Da liegt unsere mean_distance (rote Linie) dann signifikant drüber.
 
-Letztlich k�nnten wir �ber so Techniken jedenfalls schauen, ob das MEP Netzwerk abweicht von Netzwerken, die die gleiche Anzahl von Knoten haben. Hier w�re die Interpretation, der Weg zwischen den MEPs ist l�nger als bei anderen Netzwerken mit gleicher Anzahl von Knoten und der gleichen Dichte von Verbindungen. Gesamt gesehen scheinen MEPs bei Twitter sich also eher unterdurchschnittlich oft zu folgen, was an Fraktionsbildung etc. liegen k�nnte. Man folgt eben nicht dem politischen Feind.
+Letztlich könnten wir über so Techniken jedenfalls schauen, ob das MEP Netzwerk abweicht von Netzwerken, die die gleiche Anzahl von Knoten haben. Hier wäre die Interpretation, der Weg zwischen den MEPs ist länger, als bei anderen Netzwerken mit gleicher Anzahl von Knoten und der gleichen Dichte von Verbindungen. Gesamt gesehen scheinen MEPs bei Twitter sich also eher unterdurchschnittlich oft zu folgen, was an Fraktionsbildung etc. liegen könnte. Man folgt eben nicht dem politischen Feind.
 
 ```{r echo = F, warning = F}
 #sample_gnp(n = gorder(net_igraph), p = edge_density(net_igraph), directed = T)
@@ -157,7 +158,7 @@ abline(v = mean_distance(net_igraph, directed=T), col = "red", lty = 3, lwd=2)
 
 ## Transitivity
 
-Gerade in Sozialen Netzwerken wichtig. Perfekte Transitivität würde bedeuten das X und Y miteinander verbunden sind, Y und Z auch und Z und X ebenfalls. Ab solchen Dreierkonstellationen, bei denen jeder mit jedem verbunden ist, redet man von Cliquen (siehe unten). Das ist in real vorkommenden Netzwerken allerdings selten. Der Transitivitäts-Koeffizient misst die Wahrscheinlichkeit, dass die benachbarten Knoten eines Knotens ebenfalls miteinander verbunden sind. Dies wird manchmal auch als Clustering-Koeffizient bezeichnet. In unserem Fall ist die Wahrscheinlichkeit bei etwa einem Drittel (wieder durch randomisation testbar, ob das viel oder wenig ist).
+Gerade in Sozialen Netzwerken wichtig. Perfekte Transitivität würde bedeuten das X und Y miteinander verbunden sind, Y und Z auch und Z und X ebenfalls. Ab solchen Dreierkonstellationen, bei denen jeder mit jedem verbunden ist, redet man von Cliquen (siehe unten). Das ist in real vorkommenden Netzwerken allerdings selten. Der Transitivitäts-Koeffizient misst die Wahrscheinlichkeit, dass die benachbarten Knoten eines Knotens ebenfalls miteinander verbunden sind. Dies wird manchmal auch als Clustering-Koeffizient bezeichnet. In unserem Fall ist die Wahrscheinlichkeit bei etwas mehr als einem Viertel (wieder durch randomisation testbar, ob das viel oder wenig ist).
 
 Die Transitivität kann auch lokal für jeden Knoten errechnet werden. Er nimmt dann quasi alle 3er-Konstellationen wo dieser Knoten dabei ist und guckt sich die beiden anderen Knoten an.
 
@@ -168,7 +169,7 @@ Hinweis: Ob das Netzwerk gerichtet ist oder nicht, wird dabei außer Acht gelass
 transitivity(net_igraph)
 ```
 
-Bei gleicher "Dichte" des Netzwerks ist es bei unserem Netzwerk deutlich wahrscheinlicher, dass auch die Nachbarn eines Knotens miteinander verbunden sind.
+Bei gleicher "Dichte" des Netzwerks ist es bei unserem Netzwerk deutlich wahrscheinlicher, dass auch die Nachbarn eines Knotens miteinander verbunden sind. Wieder ist das ganz gut über die Fraktionsbildung zu erklären. Bei Parteikollegen die sich gegenseitig folgen, ist es relativ wahrscheinlich, dass die beiden auch dem dritten Parteikollegen folgen.
 
 ```{r echo = F, warning = F}
 g_random_trans <- unlist(lapply(g_random, transitivity))
@@ -195,24 +196,6 @@ largest.cliques(net_igraph)
 #max_cliques(net_igraph) 
 ```
 
-Daraus kann man ein Mandala machen. Viel Spaß beim Ausmalen :-P
-
-```{r echo = F, warning = F}
-g_lc <- largest_cliques(net_igraph)
-
-g_clique1 <- as.undirected(induced_subgraph(net_igraph, g_lc[[1]]))
-
-
-plot(g_clique1,
-     vertex.label.color = "black", 
-     vertex.label.cex = 0.9,
-     vertex.size = 0,
-     edge.color = 'gray28',
-     main = "Largest Clique 1",
-     layout = layout.circle(g_clique1)
-)
-```
-
 ## Assortativity
 
 Der Assortativitätskoeffizient ist positiv, wenn ähnliche Knoten (basierend auf einer externen Eigenschaft) dazu neigen verbunden zu sein. Andernfalls ist er negativ. Theoretisch kann man hier diese externe Eigenschaft auch angeben, da stürzt mein R allerdings einfach ab.
@@ -229,8 +212,7 @@ assortativity.degree(net_igraph, directed=T)
 reciprocity(net_igraph)
 ```
 
-
-Das Maß der Reziprozität definiert den Anteil der gegenseitigen Verbindungen in einem gerichteten Graphen. Funktioniert also nur bei gerichteten Graphen, unserer ist aber so einer, da MEP X ja bei Twitter MEP Y folgen kann, aber nicht zwangsläufig umgekehrt auch. Mit einem Wert von `r round(reciprocity(net_igraph),2)` werden knapp über die Hälfte der Follower auch zurück gefolgt.
+Das Maß der Reziprozität definiert den Anteil der gegenseitigen Verbindungen in einem gerichteten Graphen. Funktioniert also nur bei gerichteten Graphen, unserer ist aber so einer, da MEP X ja bei Twitter MEP Y folgen kann, aber nicht zwangsläufig umgekehrt auch. Mit einem Wert von `r round(reciprocity(net_igraph),2)` werden knapp die Hälfte der Follower auch zurück gefolgt.
 
 ## Community Detection
 
@@ -238,14 +220,18 @@ Theoretisch könnte man den Algorithmus auch selber Gruppen erkennen lassen. Da 
 
 # Analyse der Fraktionen
 
-Die meisten Werte lassen sich auch innerhalb der einzelnen Fraktionen berechnen und dann miteinander vergleichen.
+```{r}
+V(net_igraph)$GroupShort %>% unique()
 
-```{r echo = F, warning = F, message = F}
-library(data.table)
-library(stringr)
+subnet_epp <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "EPP")
+subnet_sd <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "S&D")
+subnet_green <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "Greens/EFA")
+subnet_gue <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "GUE/NGL")
+subnet_id <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "ID")
+subnet_renew <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "Renew")
+subnet_ecr <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "ECR")
+subnet_ni <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "NI")
 
-subgraph_list <- list("net_ALDE", "net_ECR","net_EFDD","net_ENF","net_EPP","net_Greens","net_GUE","net_SD","net_NI")
-groupnames <- str_replace(subgraph_list, "net_","")
 
 analyse_subgraphs <- function(subg_name){
   subg <- get(subg_name)
@@ -257,6 +243,7 @@ analyse_subgraphs <- function(subg_name){
   #subg_degree_in <- igraph::degree(subg, mode = "in")
   
   results_list <- list(
+    groupname = unique(V(subg)$GroupShort),
     #indegree = subg_degree_in,
     #outdegree = subg_degree_out,
     edgedensity = subg_edgedens,
@@ -267,56 +254,15 @@ analyse_subgraphs <- function(subg_name){
   return(results_list)
 }
 
-subgraph_results <- lapply(subgraph_list, analyse_subgraphs) %>% 
-  rbindlist() %>%
-  mutate(group = groupnames) %>% 
-  select(group, transitivity, assortativity, reciprocity, edgedensity) %>% 
-  arrange(factor(group, levels = c("ENF","EFDD","ECR","EPP","ALDE","SD","Greens","GUE","NI"))) %>% 
-  mutate_if(is.numeric, round, 3)
 
+subgraph_results <- lapply(ls(pattern = "subnet_"), analyse_subgraphs) %>% 
+  rbindlist() %>% 
+  mutate(groupname = factor(groupname, levels= c("ID", "ECR", "EPP", "Renew", "S&D", "Greens/EFA", "GUE/NGL", "NI"))) %>% 
+  arrange(groupname) %>% 
+  mutate_if(is.numeric, round, 3)
+  
 kable(subgraph_results)
 ```
 
-Beispielsweise fällt auf, dass die beiden extremer rechten Fraktionen eine deutlich höhere Reziprozität aufweisen, als die Übrigen. Tendenziell erkennt man häufiger ein "engeres" Verhältnis bei den Randparteien als bei den Parteien der Mitte. Sowas in die Richtung könnte man ebenfalls machen. Ich vermute, dass das eben auch an der Anzahl der Twitter-MEPs liegt, dass eben die EPP weit mehr davon hat und daher auch jeder EPP-MEP deutlich mehr anderen EPP folgen muss als das ein ENFler in seiner Fraktion müsste. Aber das kriegt man sicher noch irgendwie gewichtet, dass das besser vergleichbar ist.
 
-# Graph
-
-Natürlich lassen sich eben auch hübsche Bilder machen. Die Fraktionen erkennt man jedenfalls recht deutlich. Innerhalb der Fraktion folgt man sich eher als über Fraktionen hinweg. Interessant könnten aber auch die MEPs sein, die jetzt als andersfarbige Punkte im Gebiet der "falschen Fraktion" auftauchen.
-
-```{r echo = F, warning = F, fig.width=12, fig.height=12}
-V(net_igraph)$size <- 2
-V(net_igraph)$frame.color <- "black"
-V(net_igraph)$color <- V(net_igraph)$color_group
-V(net_igraph)$label <- NA 
-E(net_igraph)$arrow.mode <- 0
-
-
-### EDGE colors
-
-i <- 1
-edge_list <- NULL
-
-for(i in 1:ecount(net_igraph)) {
-  end_name <- ends(net_igraph, i)[1]
-  edge_list <- c(edge_list, end_name)
-}
-
-edge_list <- edge_list %>% as.data.frame() %>% 
-  left_join(., select(full_list, screen_name, polgroup_short), by = c("."="screen_name")) %>% 
-  mutate(edge_color = case_when(polgroup_short == "EPP" ~ "#3399FF", 
-                           polgroup_short == "S&D" ~ "#FF0000",
-                           polgroup_short == "ECR" ~ "#0000FF",
-                           polgroup_short == "ALDE" ~ "yellow",
-                           polgroup_short == "GUE/NGL" ~ "#990000",
-                           polgroup_short == "Greens/EFA" ~ "#009900",
-                           polgroup_short == "ENF" ~ "#2B3856",
-                           polgroup_short == "EFDD" ~ "#24B9B9",
-                           polgroup_short == "NI" ~ "#999999"))
-
-E(net_igraph)$color <- edge_list$edge_color
-E(net_igraph)$width <- 0.1
-
-
-plot.igraph(net_igraph)
-```
 

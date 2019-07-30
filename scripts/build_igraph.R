@@ -1,9 +1,9 @@
 library(igraph)
 library(tidyverse)
 
-edge_list <- read_csv2("data/edge_list.csv")
-d_full_information <- read_csv2("data/meps_full_list.csv")
-d_mep_twitter <- read_csv2("data/meps_twitter.csv")
+edge_list <- read_csv2("../data/edge_list.csv")
+d_full_information <- read_csv2("../data/meps_full_list.csv")
+d_mep_twitter <- read_csv2("../data/meps_twitter.csv")
 
 d_mep_twitter_adj <- d_mep_twitter %>% 
   filter((twitter_id %in% edge_list$user) | twitter_id %in% edge_list$user_id)
