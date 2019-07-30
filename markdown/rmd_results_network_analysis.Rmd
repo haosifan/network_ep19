@@ -1,20 +1,17 @@
 ---
-title: "MEP network | first results"
-author: "Stefan Haussner"
-date: "15 November 2018"
-output: 
-  pdf_document: default
-  word_document: default
-  html_document: default
+title: "results_network_analysis"
+author: "Stefan Haußner"
+date: "25 Juli 2019"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
-library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
 
-```{r echo = F, message = F}
-source("build_igraph.R", echo = F)
+```{r}
+#source("../scripts/build_igraph.R")
 ```
 
 # Analyse der MEPs
@@ -35,62 +32,75 @@ which.max(g_degree_out)
 which.max(g_degree_in)
 ```
 
-Top20 der MEPs sowohl der ausgehenden als auch der eingehenden Kontakte. Die Tabellen w�ren auch nach nach Fraktionen oder Nationen aufteilbar.
+Top20 der MEPs sowohl der ausgehenden als auch der eingehenden Kontakte. Die Tabellen wären auch nach nach Fraktionen oder Nationen aufteilbar.
 
 ```{r echo = F, warning = F, tidy = T}
 top20_eu_in <- as.data.frame(g_degree_in) %>% 
-  mutate(mep_twitter = rownames(.)) %>% 
-  select(mep_twitter, indegree = g_degree_in) %>% 
+  rownames_to_column("twitter_id") %>%
+  mutate(twitter_id = as.numeric(twitter_id)) %>% 
+  select(twitter_id, indegree = g_degree_in) %>% 
+  left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>% 
   arrange(-indegree) %>% 
-  left_join(., select(names_list, screen_name, fullName, country), by = c("mep_twitter" = "screen_name")) %>% 
+  tbl_df() %>%
   .[1:20,]
+top20_eu_in
 kable(top20_eu_in, caption = "Most followers")
+
 ```
 
 ```{r echo = F, warning = F, tidy = T}
 top20_eu_out <- as.data.frame(g_degree_out) %>% 
-  mutate(mep_twitter = rownames(.)) %>% 
-  select(mep_twitter, outdegree = g_degree_out) %>% 
+  rownames_to_column("twitter_id") %>%
+  mutate(twitter_id = as.numeric(twitter_id)) %>% 
+  select(twitter_id, outdegree = g_degree_out) %>% 
+  left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>% 
   arrange(-outdegree) %>% 
-  left_join(., select(names_list, screen_name, fullName, country), by = c("mep_twitter" = "screen_name")) %>% 
+  tbl_df() %>%
   .[1:20,]
-kable(top20_eu_out, caption = "Most Following")
+top20_eu_out
+kable(top20_eu_in, caption = "Most followings")
 ```
 
 ## Betweenness
 
-Welche Knoten m�ssen besonders oft durchlaufen werden, um im Netzwerk zu einem bestimmten Knoten zu kommen.
+Welche Knoten müssen besonders oft durchlaufen werden, um im Netzwerk zu einem bestimmten Knoten zu kommen.
 
-Anders gesagt: welcher MEP ist besonders zentral im Netzwerk, weil er besonders viele andere MEPs auf k�rzestem Weg miteinander verbindet.
+Anders gesagt: welcher MEP ist besonders zentral im Netzwerk, weil er besonders viele andere MEPs auf kürzestem Weg miteinander verbindet.
 
 ```{r echo = F, warning = F, tidy = T}
 library(igraph)
 g_betweenness <- igraph::betweenness(net_igraph, directed = TRUE,
                         normalized = TRUE)
 
-as.data.frame(g_betweenness) %>% 
-  mutate(mep_twitter = rownames(.)) %>% 
-  select(mep_twitter, betweenness = g_betweenness) %>% 
+top_10_betweenness <- as.data.frame(g_betweenness) %>%
+  rownames_to_column("twitter_id") %>% 
+  select(twitter_id, betweenness = g_betweenness) %>%
+  mutate(twitter_id = as.numeric(twitter_id)) %>% 
   arrange(-betweenness) %>% 
-  left_join(., select(names_list, screen_name, fullName, country), by = c("mep_twitter" = "screen_name")) %>% 
+  left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>% 
   .[1:10,] %>% 
-  kable(caption = "Top10 - betweenness")
+  tbl_df()
+top_10_betweenness
+kable(top_10_betweenness, caption = "Top10 - betweenness")
 ```
 
 ## Eigenvector centrality
 
-Statistisch ein bisschen fortgeschrittener als die betweenness. Hoher Eigenvector-Wert hei�t, dass der Knoten mit besonders vielen anderen Knoten verbunden ist, besonders stark aber mit anderen Knoten die ihrerseits wieder mit vielen verbunden sind.
+Statistisch ein bisschen fortgeschrittener als die betweenness. Hoher Eigenvector-Wert heißt, dass der Knoten mit besonders vielen anderen Knoten verbunden ist, besonders stark aber mit anderen Knoten die ihrerseits wieder mit vielen verbunden sind.
 
 ```{r echo = F, warning = F}
 g_ev <- eigen_centrality(net_igraph, directed = T)$vector
 
-as.data.frame(g_ev) %>% 
-  mutate(mep_twitter = rownames(.)) %>% 
-  select(mep_twitter, ev_centrality = g_ev) %>% 
+top_10_eigencentrality <- as.data.frame(g_ev) %>%
+  rownames_to_column("twitter_id") %>% 
+  mutate(twitter_id = as.numeric(twitter_id)) %>% 
+  select(twitter_id, ev_centrality = g_ev) %>% 
   arrange(-ev_centrality) %>% 
-  left_join(., select(names_list, screen_name, fullName, country), by = c("mep_twitter" = "screen_name")) %>% 
+  left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>%  
   .[1:10,] %>% 
-  kable(caption = "Top10 - Eigenvector centrality")
+  tbl_df()
+top_10_eigencentrality
+kable(top_10_eigencentrality, caption = "Top10 - Eigenvector centrality")
 ```
 
 # Analyse des Netzwerks
@@ -147,11 +157,11 @@ abline(v = mean_distance(net_igraph, directed=T), col = "red", lty = 3, lwd=2)
 
 ## Transitivity
 
-Gerade in Sozialen Netzwerken wichtig. Perfekte Transitivit�t w�rde bedeuten das X und Y miteinander verbunden sind, Y und Z auch und Z und X ebenfalls. Ab solchen Dreierkonstellationen, bei denen jeder mit jedem verbunden ist, redet man von Cliquen (siehe unten). Das ist in real vorkommenden Netzwerken allerdings selten. Der Transitivit�ts-Koeffizient misst die Wahrscheinlichkeit, dass die benachbarten Knoten eines Knotens ebenfalls miteinander verbunden sind. Dies wird manchmal auch als Clustering-Koeffizient bezeichnet. In unserem Fall ist die Wahrscheinlichkeit bei etwa einem Drittel (wieder durch randomisation testbar, ob das viel oder wenig ist).
+Gerade in Sozialen Netzwerken wichtig. Perfekte Transitivität würde bedeuten das X und Y miteinander verbunden sind, Y und Z auch und Z und X ebenfalls. Ab solchen Dreierkonstellationen, bei denen jeder mit jedem verbunden ist, redet man von Cliquen (siehe unten). Das ist in real vorkommenden Netzwerken allerdings selten. Der Transitivitäts-Koeffizient misst die Wahrscheinlichkeit, dass die benachbarten Knoten eines Knotens ebenfalls miteinander verbunden sind. Dies wird manchmal auch als Clustering-Koeffizient bezeichnet. In unserem Fall ist die Wahrscheinlichkeit bei etwa einem Drittel (wieder durch randomisation testbar, ob das viel oder wenig ist).
 
-Die Transitivit�t kann auch lokal f�r jeden Knoten errechnet werden. Er nimmt dann quasi alle 3er-Konstellationen wo dieser Knoten dabei ist und guckt sich die beiden anderen Knoten an.
+Die Transitivität kann auch lokal für jeden Knoten errechnet werden. Er nimmt dann quasi alle 3er-Konstellationen wo dieser Knoten dabei ist und guckt sich die beiden anderen Knoten an.
 
-Hinweis: Ob das Netzwerk gerichtet ist oder nicht, wird dabei au�er Acht gelassen.
+Hinweis: Ob das Netzwerk gerichtet ist oder nicht, wird dabei außer Acht gelassen.
 
 ```{r echo = F, warning = F}
 #triangles(net_igraph)
@@ -178,14 +188,14 @@ abline(v = transitivity(net_igraph), col = "red", lty = 3, lwd=2)
 
 ## Cliquen
 
-Cliquen sind Zusammenschl�sse von Knoten, die alle gegenseitig miteinander verbunden sind. In unserem Netzwerk gibt es `r count_max_cliques(net_igraph)` "gr��te" Cliquen die gleich gro� sind. Diese verbinden jeweils `r clique_num(net_igraph)` Knoten miteinander.
+Cliquen sind Zusammenschlüsse von Knoten, die alle gegenseitig miteinander verbunden sind. In unserem Netzwerk gibt es `r count_max_cliques(net_igraph)` "größte" Cliquen die gleich groß sind. Diese verbinden jeweils `r clique_num(net_igraph)` Knoten miteinander.
 
 ```{r echo = F, warning = F}
 largest.cliques(net_igraph)
 #max_cliques(net_igraph) 
 ```
 
-Daraus kann man ein Mandala machen. Viel Spa� beim Ausmalen :-P
+Daraus kann man ein Mandala machen. Viel Spaß beim Ausmalen :-P
 
 ```{r echo = F, warning = F}
 g_lc <- largest_cliques(net_igraph)
@@ -205,9 +215,9 @@ plot(g_clique1,
 
 ## Assortativity
 
-Der Assortativit�tskoeffizient ist positiv, wenn �hnliche Knoten (basierend auf einer externen Eigenschaft) dazu neigen verbunden zu sein. Andernfalls ist er negativ. Theoretisch kann man hier diese externe Eigenschaft auch angeben, da st�rzt mein R allerdings einfach ab.
+Der Assortativitätskoeffizient ist positiv, wenn ähnliche Knoten (basierend auf einer externen Eigenschaft) dazu neigen verbunden zu sein. Andernfalls ist er negativ. Theoretisch kann man hier diese externe Eigenschaft auch angeben, da stürzt mein R allerdings einfach ab.
 
-In Standardfall wird die Assortativity auf Grundlage der Degrees (s.o.) berechnet. Also: Sind Knoten mit besonders vielen ein- und ausgehenden Kanten auch mit anderen high-degree-Knoten verbunden. Hier ist der Koeffizient `r round(assortativity.degree(net_igraph, directed=T),2)`. Man kann also nicht sagen, dass besonders zentrale Knoten anderen zentralen Knoten besonders stark folgen, aber auch nicht das Gegenteil. Das k�nnte daf�r sprechen, dass es bspw. in jeder Fraktion Multiplikatoren gibt, die potentiell nur den high-degree-MEPs aus den anderen Fraktionen folgen und sonst eher den lower-degree-MEPs aus ihrer eigenen Fraktion.
+In Standardfall wird die Assortativity auf Grundlage der Degrees (s.o.) berechnet. Also: Sind Knoten mit besonders vielen ein- und ausgehenden Kanten auch mit anderen high-degree-Knoten verbunden. Hier ist der Koeffizient `r round(assortativity.degree(net_igraph, directed=T),2)`. Man kann also nicht sagen, dass besonders zentrale Knoten anderen zentralen Knoten besonders stark folgen, aber auch nicht das Gegenteil. Das könnte dafür sprechen, dass es bspw. in jeder Fraktion Multiplikatoren gibt, die potentiell nur den high-degree-MEPs aus den anderen Fraktionen folgen und sonst eher den lower-degree-MEPs aus ihrer eigenen Fraktion.
 
 ```{r echo = F, warning = F}
 assortativity.degree(net_igraph, directed=T)
@@ -215,11 +225,16 @@ assortativity.degree(net_igraph, directed=T)
 
 ## Reciprocity
 
-Das Ma� der Reziprozit�t definiert den Anteil der gegenseitigen Verbindungen in einem gerichteten Graphen. Funktioniert also nur bei gerichteten Graphen, unserer ist aber so einer, da MEP X ja bei Twitter MEP Y folgen kann, aber nicht zwangsl�ufig umgekehrt auch. Mit einem Wert von `r round(reciprocity(net_igraph),2)` werden knapp �ber die H�lfte der Follower auch zur�ck gefolgt.
+```{r}
+reciprocity(net_igraph)
+```
+
+
+Das Maß der Reziprozität definiert den Anteil der gegenseitigen Verbindungen in einem gerichteten Graphen. Funktioniert also nur bei gerichteten Graphen, unserer ist aber so einer, da MEP X ja bei Twitter MEP Y folgen kann, aber nicht zwangsläufig umgekehrt auch. Mit einem Wert von `r round(reciprocity(net_igraph),2)` werden knapp über die Hälfte der Follower auch zurück gefolgt.
 
 ## Community Detection
 
-Theoretisch k�nnte man den Algorithmus auch selber Gruppen erkennen lassen. Da wir aber bereits auch schon vorgegebene Gruppen (Nation und Fraktion und nationale Partei haben wir schon im Datensatz) haben, m�ssten wir das mal besprechen, ob das Sinn ergibt.
+Theoretisch könnte man den Algorithmus auch selber Gruppen erkennen lassen. Da wir aber bereits auch schon vorgegebene Gruppen (Nation und Fraktion und nationale Partei haben wir schon im Datensatz) haben, müssten wir das mal besprechen, ob das Sinn ergibt.
 
 # Analyse der Fraktionen
 
@@ -262,11 +277,11 @@ subgraph_results <- lapply(subgraph_list, analyse_subgraphs) %>%
 kable(subgraph_results)
 ```
 
-Beispielsweise f�llt auf, dass die beiden extremer rechten Fraktionen eine deutlich h�here Reziprozit�t aufweisen, als die �brigen. Tendenziell erkennt man h�ufiger ein "engeres" Verh�ltnis bei den Randparteien als bei den Parteien der Mitte. Sowas in die Richtung k�nnte man ebenfalls machen. Ich vermute, dass das eben auch an der Anzahl der Twitter-MEPs liegt, dass eben die EPP weit mehr davon hat und daher auch jeder EPP-MEP deutlich mehr anderen EPP folgen muss als das ein ENFler in seiner Fraktion m�sste. Aber das kriegt man sicher noch irgendwie gewichtet, dass das besser vergleichbar ist.
+Beispielsweise fällt auf, dass die beiden extremer rechten Fraktionen eine deutlich höhere Reziprozität aufweisen, als die Übrigen. Tendenziell erkennt man häufiger ein "engeres" Verhältnis bei den Randparteien als bei den Parteien der Mitte. Sowas in die Richtung könnte man ebenfalls machen. Ich vermute, dass das eben auch an der Anzahl der Twitter-MEPs liegt, dass eben die EPP weit mehr davon hat und daher auch jeder EPP-MEP deutlich mehr anderen EPP folgen muss als das ein ENFler in seiner Fraktion müsste. Aber das kriegt man sicher noch irgendwie gewichtet, dass das besser vergleichbar ist.
 
 # Graph
 
-Nat�rlich lassen sich eben auch h�bsche Bilder machen. Die Fraktionen erkennt man jedenfalls recht deutlich. Innerhalb der Fraktion folgt man sich eher als �ber Fraktionen hinweg. Interessant k�nnten aber auch die MEPs sein, die jetzt als andersfarbige Punkte im Gebiet der "falschen Fraktion" auftauchen.
+Natürlich lassen sich eben auch hübsche Bilder machen. Die Fraktionen erkennt man jedenfalls recht deutlich. Innerhalb der Fraktion folgt man sich eher als über Fraktionen hinweg. Interessant könnten aber auch die MEPs sein, die jetzt als andersfarbige Punkte im Gebiet der "falschen Fraktion" auftauchen.
 
 ```{r echo = F, warning = F, fig.width=12, fig.height=12}
 V(net_igraph)$size <- 2
