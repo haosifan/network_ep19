@@ -10,9 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(dplyr)
 library(data.table)
+library(kableExtra)
 ```
 
-```{r echo = FALSE, results = "hide"}
+```{r include=FALSE}
 source("../scripts/build_igraph.R")
 ```
 
@@ -198,12 +199,16 @@ largest.cliques(net_igraph)
 
 ## Assortativity
 
-Der Assortativitätskoeffizient ist positiv, wenn ähnliche Knoten (basierend auf einer externen Eigenschaft) dazu neigen verbunden zu sein. Andernfalls ist er negativ. Theoretisch kann man hier diese externe Eigenschaft auch angeben, da stürzt mein R allerdings einfach ab.
+Der Assortativitätskoeffizient ist positiv, wenn ähnliche Knoten (basierend auf einer externen Eigenschaft) dazu neigen verbunden zu sein. Andernfalls ist er negativ.
 
 In Standardfall wird die Assortativity auf Grundlage der Degrees (s.o.) berechnet. Also: Sind Knoten mit besonders vielen ein- und ausgehenden Kanten auch mit anderen high-degree-Knoten verbunden. Hier ist der Koeffizient `r round(assortativity.degree(net_igraph, directed=T),2)`. Man kann also nicht sagen, dass besonders zentrale Knoten anderen zentralen Knoten besonders stark folgen, aber auch nicht das Gegenteil. Das könnte dafür sprechen, dass es bspw. in jeder Fraktion Multiplikatoren gibt, die potentiell nur den high-degree-MEPs aus den anderen Fraktionen folgen und sonst eher den lower-degree-MEPs aus ihrer eigenen Fraktion.
 
+Wenn man dem Assortativity-Index das externe Attribut der Fraktionszugehörigkeit mitgibt ist die Assortativity stark positiv, was die Fraktionsbildung im Netzwerk unterstreicht.
+
 ```{r echo = F, warning = F}
 assortativity.degree(net_igraph, directed=T)
+
+assortativity.nominal(net_igraph, types = as.numeric(as.factor(V(net_igraph)$GroupShort)))
 ```
 
 ## Reciprocity
@@ -232,11 +237,10 @@ subnet_renew <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "Renew"
 subnet_ecr <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "ECR")
 subnet_ni <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "NI")
 
-
 analyse_subgraphs <- function(subg_name){
   subg <- get(subg_name)
   subg_trans <- transitivity(subg)
-  subg_assort <- assortativity.degree(subg, directed = T)
+  subg_assort <- assortativity.nominal(subg, types = as.numeric(as.factor(V(subg)$nationalParty)), directed = T)
   subg_recip <- reciprocity(subg)
   subg_edgedens <- edge_density(subg)
   #subg_degree_out <- igraph::degree(subg, mode = "out")
@@ -259,10 +263,17 @@ subgraph_results <- lapply(ls(pattern = "subnet_"), analyse_subgraphs) %>%
   rbindlist() %>% 
   mutate(groupname = factor(groupname, levels= c("ID", "ECR", "EPP", "Renew", "S&D", "Greens/EFA", "GUE/NGL", "NI"))) %>% 
   arrange(groupname) %>% 
-  mutate_if(is.numeric, round, 3)
-  
-kable(subgraph_results)
+  mutate_if(is.numeric, round, 3) %>% 
+  mutate_if(is.numeric, function(x) {
+    cell_spec(x, bold = FALSE, 
+              color = spec_color(x, end = 0.95),
+              font_size = spec_font_size(x))
+  }) 
+
+kable(subgraph_results, escape = FALSE) %>% kable_styling(c("striped", "condensed"), full_width = F)
 ```
+
+
 
 
 
