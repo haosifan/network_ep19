@@ -21,22 +21,17 @@ source("../scripts/build_igraph.R")
 
 ## In- und Outdegree: 
 
-Welche MEPs folgen besonders vielen anderen im Netzwerk oder werden besonders gefolgt
+Welche MEPs folgen besonders vielen anderen im Netzwerk oder werden besonders gefolgt?
 
 ```{r echo = F, warning = F}
 g_degree_out <- igraph::degree(net_igraph, mode = "out")
 g_degree_in <- igraph::degree(net_igraph, mode = "in")
+
 ```
 
-Der Abgeordnete mit den meisten Followern (innerhalb der MEPs) ist Frans Timmermans (520 MEPs folgen ihm). Diejenige Abgeordnete, die den meisten anderen MEPs folgt ist Tomáš ZDECHOVSKÝ (EPP, Czech Rep.), der 586 von 621 twitter-aktiven MEPs folgt.
+Der ```Grad``` eines Netzwerks ist ein einfaches Zentralitätsmaß, das zählt, wie viele Nachbarn ein Knoten hat. Wenn das Netzwerk gerichtet ist, haben wir zwei Versionen des Maßes: Der ```in-degree``` ist die Anzahl der eingehenden Verbindungen während der ```out-degree``` die Anzahl der ausgehenden Kanten ist. In einem ungerichteten Netzwerk ist der in- und der out-degree identisch.
 
-```{r echo = F, warning = F}
-which.max(g_degree_out)
-filter(d_mep_twitter_adj, twitter_id == names(which.max(g_degree_out)))
-
-which.max(g_degree_in)
-filter(d_mep_twitter_adj, twitter_id == names(which.max(g_degree_in)))
-```
+Der Abgeordnete mit den meisten Followern (innerhalb der MEPs) ist Frans Timmermans (229 MEPs folgen ihm). Derjenige Abgeordnete, der den meisten anderen MEPs folgt ist Tomáš ZDECHOVSKÝ (EPP, Czech Rep.), der 578 von 621 twitter-aktiven MEPs folgt.
 
 Top20 der MEPs sowohl der ausgehenden als auch der eingehenden Kontakte. Die Tabellen wären auch nach nach Fraktionen oder Nationen aufteilbar.
 
@@ -62,14 +57,14 @@ top20_eu_out <- as.data.frame(g_degree_out) %>%
   arrange(-outdegree) %>% 
   tbl_df() %>%
   .[1:20,]
-kable(top20_eu_in, caption = "Most followings")
+kable(top20_eu_out, caption = "Most followings")
 ```
 
 ## Betweenness
 
-Welche Knoten müssen besonders oft durchlaufen werden, um im Netzwerk zu einem bestimmten Knoten zu kommen.
+Die ```Betweenness``` misst das Ausmaß, in dem ein Knoten auf Pfaden zwischen anderen Knoten liegt. Knoten mit hoher Betweenness können einen erheblichen Einfluss innerhalb eines Netzwerks haben, da sie die gegenseitige Übermittlung von Informationen beeinflussen. Sie sind auch diejenigen, deren Entfernung aus dem Netzwerk die Kommunikation zwischen anderen Knoten am meisten stört.
 
-Anders gesagt: welcher MEP ist besonders zentral im Netzwerk, weil er besonders viele andere MEPs auf kürzestem Weg miteinander verbindet.
+Welche Knoten müssen besonders oft durchlaufen werden, um im Netzwerk zu einem bestimmten Knoten zu kommen.
 
 ```{r echo = F, warning = F, tidy = T}
 library(igraph)
@@ -89,7 +84,12 @@ kable(top_10_betweenness, caption = "Top10 - betweenness")
 
 ## Eigenvector centrality
 
-Statistisch ein bisschen fortgeschrittener als die betweenness. Hoher Eigenvector-Wert heißt, dass der Knoten mit besonders vielen anderen Knoten verbunden ist, besonders stark aber mit anderen Knoten, die ihrerseits wieder mit vielen verbunden sind.
+Die ```Eigenvektorzentralität``` ist quasi die Erweiterung der degree-Zentralität. Bei der degree-Zentralität wird für jede Verbindung ein Punkt vergeben. Es sind jedoch nicht alle Knoten gleichwertig: Einige sind relevanter als andere und vernünftigerweise zählen Verbindungen zu wichtigen Knoten mehr. Daher ist die These der Eigenvektorzentralität:
+
+> Ein Knoten ist wichtig, wenn er mit anderen wichtigen Knoten verbunden ist.
+
+Die Eigenvektor-Zentralität unterscheidet sich von der Grad-Zentralität: Ein Knoten, der viele Verbindungen hat, muss nicht notwendigerweise eine hohe Eigenvektor-Zentralität haben (es könnte sein, dass alle Kontakte nur zu sehr wenigen anderen Knoten Kontakte haben). Darüber hinaus ist ein Knoten mit hoher Eigenvektor-Zentralität nicht notwendigerweise stark verknüpft (der Knoten kann wenige, aber wichtige Kontakte haben).
+
 
 ```{r echo = F, warning = F}
 g_ev <- eigen_centrality(net_igraph, directed = T)$vector
@@ -126,7 +126,7 @@ mean_distance(net_igraph, directed = T)
 
 Tatsächlich ist der Weg angeblich sogar relativ lang. Jedenfalls übernatürlich lang für ein Netzwerk der gleichen edge_density wie in unserem Originalnetzwerk. Davon habe ich 1000 simuliert und die Kanten werden zufällig zwischen die gleiche Anzahl an Knoten gesetzt. Für alle wird dann die MeanDistance errechnet und in einem Histogramm dargestellt. Das sieht jetzt schon relativ gestaucht aus, weil die alle eine mean_distance von 2.23 - 2.28 haben. Da liegt unsere mean_distance (rote Linie) dann signifikant drüber.
 
-Letztlich könnten wir über so Techniken jedenfalls schauen, ob das MEP Netzwerk abweicht von Netzwerken, die die gleiche Anzahl von Knoten haben. Hier wäre die Interpretation, der Weg zwischen den MEPs ist länger, als bei anderen Netzwerken mit gleicher Anzahl von Knoten und der gleichen Dichte von Verbindungen. Gesamt gesehen scheinen MEPs bei Twitter sich also eher unterdurchschnittlich oft zu folgen, was an Fraktionsbildung etc. liegen könnte. Man folgt eben nicht dem politischen Feind.
+Letztlich könnten wir über so Techniken jedenfalls schauen, ob das MEP-Netzwerk abweicht von Netzwerken, die die gleiche Anzahl von Knoten haben. Hier wäre die Interpretation, der Weg zwischen den MEPs ist länger, als bei anderen Netzwerken mit gleicher Anzahl von Knoten und der gleichen Dichte von Verbindungen. Gesamt gesehen scheinen MEPs bei Twitter sich also eher unterdurchschnittlich oft zu folgen, was an Fraktionsbildung etc. liegen könnte. Man folgt eben nicht dem politischen Feind.
 
 ```{r echo = F, warning = F}
 #sample_gnp(n = gorder(net_igraph), p = edge_density(net_igraph), directed = T)
@@ -223,11 +223,11 @@ Das Maß der Reziprozität definiert den Anteil der gegenseitigen Verbindungen i
 
 Theoretisch könnte man den Algorithmus auch selber Gruppen erkennen lassen. Da wir aber bereits auch schon vorgegebene Gruppen (Nation und Fraktion und nationale Partei haben wir schon im Datensatz) haben, müssten wir das mal besprechen, ob das Sinn ergibt.
 
+Könnte aber für "Bündnisse" etc. spannend sein. Oder bspw. ob sich eine Community aus überwiegend Links-Mitte und Rechts-Mitte, oder Mitte gegen Extreme oder sowas ergibt.
+
 # Analyse der Fraktionen
 
 ```{r}
-V(net_igraph)$GroupShort %>% unique()
-
 subnet_epp <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "EPP")
 subnet_sd <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "S&D")
 subnet_green <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "Greens/EFA")
@@ -240,7 +240,7 @@ subnet_ni <- induced.subgraph(net_igraph, V(net_igraph)$GroupShort == "NI")
 analyse_subgraphs <- function(subg_name){
   subg <- get(subg_name)
   subg_trans <- transitivity(subg)
-  subg_assort <- assortativity.nominal(subg, types = as.numeric(as.factor(V(subg)$nationalParty)), directed = T)
+  subg_assort <- assortativity.degree(subg)
   subg_recip <- reciprocity(subg)
   subg_edgedens <- edge_density(subg)
   #subg_degree_out <- igraph::degree(subg, mode = "out")
@@ -263,16 +263,50 @@ subgraph_results <- lapply(ls(pattern = "subnet_"), analyse_subgraphs) %>%
   rbindlist() %>% 
   mutate(groupname = factor(groupname, levels= c("ID", "ECR", "EPP", "Renew", "S&D", "Greens/EFA", "GUE/NGL", "NI"))) %>% 
   arrange(groupname) %>% 
-  mutate_if(is.numeric, round, 3) %>% 
-  mutate_if(is.numeric, function(x) {
-    cell_spec(x, bold = FALSE, 
-              color = spec_color(x, end = 0.95),
-              font_size = spec_font_size(x))
-  }) 
+  mutate_if(is.numeric, round, 3)
+
+DT::datatable(subgraph_results)
 
 kable(subgraph_results, escape = FALSE) %>% kable_styling(c("striped", "condensed"), full_width = F)
 ```
 
+Hier erkennt man meiner Meinung nach bereits folgendes:
+
+## Die NIs
+
+Die NIs haben extrem hohe Werte. Die "Nicht-Fraktion" ist sehr dicht (viele Verbindungen), sie folgen sich sehr stark untereinander und folgen sich auch gegenseitig zurück. Das liegt vor allem daran, dass die NI dominiert wird, durch die Brexit-Partei und die Movimento 5 Stelle. Das diese zwei nationalen Parteien sich intern stark folgen, ergibt Sinn. Es gibt also zwei Gruppen bei den NI, die sich eben besonders stark folgen. Siehe auch Grafik.
+
+```{r}
+set.seed(1903)
+plot.igraph(subnet_ni)
+```
+
+## Fraktionen mit dem dichtesten Netzwerk
+
+Außer der NI haben die Grünen, die GUE/NGL und Renew Europe die höchste Dichte, also den höchsten Anteil an existierenden Verbindungen an allen mööglichen. Könnte bspw. am Alter liegen (tendenziell jüngere Fraktionen), die dann eben social-media-affiner sind. Kommt drauf an, ob es sich lohnt hier hinterher zu forschen (Alter wäre prinzipiell möglich).
+
+## Extreme Parteien anders als Mitte? 
+
+Der Transitivitäts-Koeffizient misst die Wahrscheinlichkeit, dass die benachbarten Knoten eines Knotens ebenfalls miteinander verbunden sind. Hohe Werte weisen diesmal abgesehen von den NI auch die ECR und die Grünen auf. Bei der reciprocity liegen sogar ECR und ID vorne.
+
+Könnte man ein bisschen das Argument draus machen, dass die right-wings sehr stark drauf achten, dass sie ihren Leuten auch zurück folgen, aber auch nicht unbedingt mehr (also nicht darüber hinaus auch noch nach weiteren Kolleg*innen Ausschau halten). Die ECR versucht aber eben doch so eine "Fraktionsidentität" auch auf Twitter zu konstruieren.
+
+S&D und EPP liegen jedenfalls häufiger maximal im Mittelfeld, sind demnach eher unterdurchschnittlich vernetzt. Auch das müsste man aber eigentlich für alle nochmal mit ERGM testen.
+
+## Fraktionsbildung geht über Eliten
+
+Bei allen Fraktionen außer der ECR ist der Assortativity-Wert negativ. Da dieser hier auf dem degree-Wert beruht, bedeutet das, dass Gradmäßig sehr unterschiedliche MEPs sich folgen. Also diejenigen die sehr viele Follower haben etc. folgen innerhalb der Fraktion auch denjenigen, die nicht soviele Follower aus der Fraktion haben.
+
+Hier findet demnach keine Elitenbildung auf Twitter statt, wo auch die Fraktionseliten nur anderen Fraktionseliten folgen, sondern im Vordergrund steht das statusunabhängige Folgen von Mitgliedern der Fraktion.
+
+# Grafisch
+
+```{r}
+set.seed(1904)
+plot.igraph(net_igraph)
+```
+
+Abschließend der Netzwerk-Graph insgesamt: Man sieht sehr gut, dass Fraktionen sich zusammenfinden. Außerdem lassen sich politische Lager ebenfalls erkennen. Der ECR-Knubbel ist näher an ID und EPP als am linken Spektrum. ID fällt etwas aus der allgemeinen Punktwolke heraus. Ebenfalls gibt es links oberhalb der Renew eine Gruppe grauer Knoten. Das sind die Abgeordneten der Brexit-Party.
 
 
 
