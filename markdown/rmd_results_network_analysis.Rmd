@@ -265,6 +265,8 @@ subgraph_results <- lapply(ls(pattern = "subnet_"), analyse_subgraphs) %>%
   arrange(groupname) %>% 
   mutate_if(is.numeric, round, 3)
 
+#write_csv2(subgraph_results, path = "../output/subgraph_results.csv")
+
 DT::datatable(subgraph_results)
 
 kable(subgraph_results, escape = FALSE) %>% kable_styling(c("striped", "condensed"), full_width = F)
@@ -283,7 +285,7 @@ plot.igraph(subnet_ni)
 
 ## Fraktionen mit dem dichtesten Netzwerk
 
-Außer der NI haben die Grünen, die GUE/NGL und Renew Europe die höchste Dichte, also den höchsten Anteil an existierenden Verbindungen an allen mööglichen. Könnte bspw. am Alter liegen (tendenziell jüngere Fraktionen), die dann eben social-media-affiner sind. Kommt drauf an, ob es sich lohnt hier hinterher zu forschen (Alter wäre prinzipiell möglich).
+Außer der NI haben die Grünen, die GUE/NGL und Renew Europe die höchste Dichte, also den höchsten Anteil an existierenden Verbindungen an allen möglichen. Könnte bspw. am Alter liegen (tendenziell jüngere Fraktionen), die dann eben social-media-affiner sind. Kommt drauf an, ob es sich lohnt hier hinterher zu forschen (Alter wäre prinzipiell möglich).
 
 ## Extreme Parteien anders als Mitte? 
 
@@ -302,8 +304,13 @@ Hier findet demnach keine Elitenbildung auf Twitter statt, wo auch die Fraktions
 # Grafisch
 
 ```{r}
-set.seed(1904)
+set.seed(1905)
 plot.igraph(net_igraph)
+
+set.seed(1905)
+png(filename = "../gfx/network_complete.png")
+igraph::plot.igraph(net_igraph)
+dev.off()
 ```
 
 Abschließend der Netzwerk-Graph insgesamt: Man sieht sehr gut, dass Fraktionen sich zusammenfinden. Außerdem lassen sich politische Lager ebenfalls erkennen. Der ECR-Knubbel ist näher an ID und EPP als am linken Spektrum. ID fällt etwas aus der allgemeinen Punktwolke heraus. Ebenfalls gibt es links oberhalb der Renew eine Gruppe grauer Knoten. Das sind die Abgeordneten der Brexit-Party.
