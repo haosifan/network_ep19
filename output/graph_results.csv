@@ -1,9 +1,2 @@
-groupname;edgedensity;transitivity;assortativity;reciprocity
-ID;0,145;0,554;-0,200;0,647
-ECR;0,156;0,755; 0,222;0,689
-EPP;0,133;0,445;-0,203;0,550
-Renew;0,237;0,537;-0,274;0,560
-S&D;0,141;0,475;-0,123;0,594
-Greens/EFA;0,342;0,667;-0,232;0,582
-GUE/NGL;0,296;0,596;-0,241;0,590
-NI;0,333;0,913; 0,481;0,771
+edgedensity (*100);average path length;transitivity (*100);homophily (based on degree);homophily (based on group affiliation);reciprocity (*100)
+4,32;2,57;28,68;-0,1;0,55;49,4
