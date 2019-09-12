@@ -48,6 +48,8 @@ top20_eu_in <- as.data.frame(g_degree_in) %>%
   arrange(-indegree) %>% 
   tbl_df() %>%
   .[1:20,]
+
+top20_eu_in
 kable(top20_eu_in, caption = "Most followers")
 
 ```
@@ -61,6 +63,8 @@ top20_eu_out <- as.data.frame(g_degree_out) %>%
   arrange(-outdegree) %>% 
   tbl_df() %>%
   .[1:20,]
+
+top20_eu_out
 kable(top20_eu_out, caption = "Most followings")
 ```
 
@@ -83,6 +87,9 @@ top_10_betweenness <- as.data.frame(g_betweenness) %>%
   left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>% 
   .[1:10,] %>% 
   tbl_df()
+
+top_10_betweenness
+
 kable(top_10_betweenness, caption = "Top10 - betweenness")
 ```
 
@@ -106,6 +113,7 @@ top_10_eigencentrality <- as.data.frame(g_ev) %>%
   left_join(.,d_mep_twitter_adj, by = c("twitter_id" = "twitter_id")) %>%  
   .[1:10,] %>% 
   tbl_df()
+top_10_eigencentrality %>% write_csv2("../output/eigenvector_top10.csv")
 kable(top_10_eigencentrality, caption = "Top10 - Eigenvector centrality")
 ```
 
