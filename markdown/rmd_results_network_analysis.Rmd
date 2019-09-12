@@ -11,6 +11,10 @@ library(knitr)
 library(dplyr)
 library(data.table)
 library(kableExtra)
+library(tidyverse)
+library(GGally)
+library(gridExtra)
+library(ggpubr)
 ```
 
 ```{r include=FALSE}
@@ -144,17 +148,12 @@ for(i in 1:1000){
 
 g_random_apl_meandis <- unlist(lapply(g_random, mean_distance, directed = T))
 
-n_meandistance <- mean_distance(net_igraph, directed = T)
-if (min(g_random_apl_meandis) > n_meandistance) {
-  xlim_l <- n_meandistance
-  xlim_u <- max(g_random_apl_meandis)
-} else {
-  xlim_l <- max(g_random_apl_meandis)
-  xlim_u <- n_meandistance
-}
 
-hist(g_random_apl_meandis, breaks = 40, xlim = range(xlim_l, xlim_u))
-abline(v = mean_distance(net_igraph, directed=T), col = "red", lty = 3, lwd=2)
+gg_meandistance <- ggplot()+
+  geom_histogram(aes(x = g_random_apl_meandis), bins = 200)+
+  geom_vline(xintercept = mean_distance(net_igraph, directed = TRUE), linetype = "dashed", size = 1, color = "red")+
+  labs(x = "average path length")
+
 ```
 
 ## Transitivity
@@ -175,17 +174,11 @@ Bei gleicher "Dichte" des Netzwerks ist es bei unserem Netzwerk deutlich wahrsch
 ```{r echo = F, warning = F}
 g_random_trans <- unlist(lapply(g_random, transitivity))
 
-n_transitivity <- transitivity(net_igraph)
-if (min(g_random_trans) > n_transitivity) {
-  xlim_l <- n_transitivity
-  xlim_u <- max(g_random_trans)
-} else {
-  xlim_l <- max(g_random_trans)
-  xlim_u <- n_transitivity
-}
 
-hist(g_random_trans, breaks = 40, xlim = range(xlim_l, xlim_u))
-abline(v = transitivity(net_igraph), col = "red", lty = 3, lwd=2)
+gg_transitivity <- ggplot()+
+  geom_histogram(aes(x = g_random_trans), bins = 500)+
+  geom_vline(xintercept = transitivity(net_igraph), linetype = "dashed", size = 1, color = "red")+
+  labs(x = "transitivity")
 ```
 
 ## Cliquen
@@ -211,6 +204,17 @@ assortativity.degree(net_igraph, directed=T)
 assortativity.nominal(net_igraph, types = as.numeric(as.factor(V(net_igraph)$GroupShort)))
 ```
 
+Random Graph Model
+
+```{r echo = F, warning = F}
+g_random_assort <- unlist(lapply(g_random, assortativity.degree, directed = TRUE))
+
+gg_assortativity <- ggplot()+
+  geom_histogram(aes(x = g_random_assort), bins = 100)+
+  geom_vline(xintercept = assortativity.degree(net_igraph), linetype = "dashed", size = 1, color = "red")+
+  labs(x = "assortativity")
+```
+
 ## Reciprocity
 
 ```{r}
@@ -218,6 +222,27 @@ reciprocity(net_igraph)
 ```
 
 Das Maß der Reziprozität definiert den Anteil der gegenseitigen Verbindungen in einem gerichteten Graphen. Funktioniert also nur bei gerichteten Graphen, unserer ist aber so einer, da MEP X ja bei Twitter MEP Y folgen kann, aber nicht zwangsläufig umgekehrt auch. Mit einem Wert von `r round(reciprocity(net_igraph),2)` werden knapp die Hälfte der Follower auch zurück gefolgt.
+
+```{r echo = F, warning = F}
+g_random_recip <- unlist(lapply(g_random, reciprocity))
+
+gg_reciprocity <- ggplot()+
+  geom_histogram(aes(x = g_random_recip), bins = 500)+
+  geom_vline(xintercept = reciprocity(net_igraph), linetype = "dashed", size = 1, color = "red")+
+  labs(x = "reciprocity")
+```
+
+# Combine all ERGM-Graphs
+
+```{r}
+
+subtitle <- text_grob("Histogram shows the results of 1000 random graphs and the dashed line shows the value of the MEP network", size = 7, face = "italic")
+
+gg_grid_ergm <- grid.arrange(gg_meandistance, gg_assortativity, gg_transitivity, gg_reciprocity, top = subtitle)
+ggsave(plot = gg_grid_ergm, "../gfx/random_graph_models.png", units = "cm", width = 14, height = 10, dpi = 300)
+```
+
+
 
 ## Community Detection
 
@@ -311,6 +336,11 @@ set.seed(1905)
 png(filename = "../gfx/network_complete.png")
 igraph::plot.igraph(net_igraph)
 dev.off()
+
+set.seed(1236)
+ggnet2(net_igraph, node.color = V(net_igraph)$color, node.size = 2, edge.alpha = 0.2)
+
+
 ```
 
 Abschließend der Netzwerk-Graph insgesamt: Man sieht sehr gut, dass Fraktionen sich zusammenfinden. Außerdem lassen sich politische Lager ebenfalls erkennen. Der ECR-Knubbel ist näher an ID und EPP als am linken Spektrum. ID fällt etwas aus der allgemeinen Punktwolke heraus. Ebenfalls gibt es links oberhalb der Renew eine Gruppe grauer Knoten. Das sind die Abgeordneten der Brexit-Party.
