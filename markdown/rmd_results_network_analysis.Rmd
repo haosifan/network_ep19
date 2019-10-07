@@ -354,5 +354,15 @@ ggnet2(net_igraph, node.color = V(net_igraph)$color, node.size = 2, edge.alpha =
 Abschließend der Netzwerk-Graph insgesamt: Man sieht sehr gut, dass Fraktionen sich zusammenfinden. Außerdem lassen sich politische Lager ebenfalls erkennen. Der ECR-Knubbel ist näher an ID und EPP als am linken Spektrum. ID fällt etwas aus der allgemeinen Punktwolke heraus. Ebenfalls gibt es links oberhalb der Renew eine Gruppe grauer Knoten. Das sind die Abgeordneten der Brexit-Party.
 
 
+Übersicht:
+
+```{r}
+d_mep_twitter_adj %>% 
+  group_by(group) %>% 
+  summarise(n = n()) %>% 
+  write_csv2("accounts_per_group.csv")
+```
+
+
 
 
