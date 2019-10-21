@@ -10,6 +10,14 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rtweet)
 library(openxlsx)
+library(httpuv)
+```
+
+
+```{r}
+get_token()
+
+lookup_users("s_haussner")
 ```
 
 # Einlesen der Daten
@@ -24,13 +32,19 @@ lookup_userids <- function(user_name) {
   return(user_info$user_id)
 }
 
-meps_full_list <- openxlsx::read.xlsx("../data/list_meps_2019.xlsx", sheet = 1) %>% tbl_df()
-meps_full_list
+meps_full_list <- read.csv2("../data/meps_full_list.csv") %>% tbl_df()
+#meps_full_list
 
 meps_list_withtwitter <- meps_full_list %>% 
   filter(!is.na(twitter_name)) %>% 
-  mutate(twitter_id = lookup_userids(twitter_name))
+  mutate(twitter_id = lookup_userids(as.character(twitter_name)))
 meps_list_withtwitter
+
+meps_full_list %>% 
+  filter(!is.na(twitter_name)) %>% 
+  head() %>% 
+  mutate(twitter_id = lookup_userids(as.character(twitter_name))) %>% 
+  select(twitter_name, twitter_id)
 ```
 
 Obtain edge list of MEP-network:
@@ -39,11 +53,10 @@ First get all friends of all MEPs (with twitter). Afterwards filter where the us
 Result is an edge list, which can be used for making a directed network.
 
 ```{r}
-
 allfriends <- rtweet::get_friends(users = meps_list_withtwitter$twitter_id, retryonratelimit = TRUE)
 
 edge_list <- allfriends %>% 
-  filter((user %in% meps_list_withtwitter$twitter_id) | (user_id %in% meps_list_withtwitter$twitter_id))
+  filter(user_id %in% meps_list_withtwitter$twitter_id)
 
 write_csv2(x = allfriends, path = "../data/allfriends.csv")
 write_csv2(x = edge_list, path = "../data/edge_list.csv")
@@ -82,10 +95,7 @@ Adjust the MEP-info on these cases that are part of the edge list, either as sta
 ```{r}
 
 d_mep_twitter_adj <- d_mep_twitter %>% 
-  filter((twitter_id %in% edge_list$user) | twitter_id %in% edge_list$user_id)
-
-
-
+  filter(twitter_id %in% edge_list$user_id)
 ```
 
 

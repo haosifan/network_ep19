@@ -6,7 +6,7 @@ d_full_information <- read_csv2("../data/meps_full_list.csv")
 d_mep_twitter <- read_csv2("../data/meps_twitter.csv")
 
 d_mep_twitter_adj <- d_mep_twitter %>% 
-  filter((twitter_id %in% edge_list$user) | twitter_id %in% edge_list$user_id)
+  filter(twitter_id %in% edge_list$user_id)
 
 net_igraph <- igraph::graph_from_data_frame(d = edge_list, directed = TRUE)
 
@@ -45,6 +45,5 @@ E(net_igraph)$arrow.mode <- 0
 V(net_igraph)$size <- 3
 
 set.seed(1904)
-plot.igraph(net_igraph)
-
+#plot.igraph(net_igraph)
 
