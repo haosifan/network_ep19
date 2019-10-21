@@ -209,7 +209,9 @@ Wenn man dem Assortativity-Index das externe Attribut der Fraktionszugehörigkei
 ```{r echo = F, warning = F}
 assortativity.degree(net_igraph, directed=T)
 
-assortativity.nominal(net_igraph, types = as.numeric(as.factor(V(net_igraph)$GroupShort)))
+as.numeric(as.factor(V(net_igraph)$GroupShort))
+
+assortativity.nominal(net_igraph, types = as.factor(V(net_igraph)$GroupShort))
 ```
 
 Random Graph Model
