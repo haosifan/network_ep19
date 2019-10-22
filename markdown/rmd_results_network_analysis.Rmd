@@ -75,7 +75,6 @@ Die ```Betweenness``` misst das Ausmaß, in dem ein Knoten auf Pfaden zwischen a
 Welche Knoten müssen besonders oft durchlaufen werden, um im Netzwerk zu einem bestimmten Knoten zu kommen.
 
 ```{r echo = F, warning = F, tidy = T}
-library(igraph)
 g_betweenness <- igraph::betweenness(net_igraph, directed = TRUE,
                         normalized = TRUE)
 
@@ -115,6 +114,7 @@ top_10_eigencentrality <- as.data.frame(g_ev) %>%
   tbl_df()
 top_10_eigencentrality %>% write_csv2("../output/eigenvector_top10.csv")
 kable(top_10_eigencentrality, caption = "Top10 - Eigenvector centrality")
+top_10_eigencentrality
 ```
 
 # Analyse des Netzwerks
@@ -211,7 +211,9 @@ assortativity.degree(net_igraph, directed=T)
 
 as.numeric(as.factor(V(net_igraph)$GroupShort))
 
-assortativity.nominal(net_igraph, types = as.factor(V(net_igraph)$GroupShort))
+assortativity.nominal(net_igraph, types = as.numeric(as.factor(V(net_igraph)$GroupShort)))
+
+assortativity.nominal(net_igraph, types = as.numeric(as.factor(V(net_igraph)$country)))
 ```
 
 Random Graph Model

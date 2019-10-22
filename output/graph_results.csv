@@ -1,2 +1,2 @@
-edgedensity (*100);average path length;transitivity (*100);homophily (based on degree);homophily (based on group affiliation);reciprocity (*100)
-4,32;2,57;28,68;-0,1;0,55;49,4
+edgedensity (*100);average path length;transitivity (*100);homophily (based on degree);homophily (based on group affiliation);homophily (based on country);reciprocity (*100)
+4,93;2,49;30,1;-0,09;0,56;0,32;51,5
