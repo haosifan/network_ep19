@@ -77,4 +77,7 @@ library(threejs)
 library(htmlwidgets)
 
 
-graphjs(net_igraph, showLabels=TRUE, bg = "white")
+graphjs(net_igraph, showLabels=TRUE, bg = "white") %>% 
+  saveWidget(file = "interactive_graph_coloured.html")
+
+citation("visNetwork")
